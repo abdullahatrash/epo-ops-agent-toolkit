@@ -1,2 +1,2 @@
-import EpoOpsAgentToolkit from "./toolkit";
-export { EpoOpsAgentToolkit };
+import EPOAgentToolkit from './toolkit';
+export {EPOAgentToolkit};

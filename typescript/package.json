@@ -4,11 +4,13 @@
   "homepage": "https://github.com/abdullahatrash/epo-ops-agent-toolkit",
   "scripts": {
     "build": "tsup",
-    "clean": "rm -rf langchain ai-sdk modelcontextprotocol openai",
+    "clean": "rm -rf ai-sdk",
     "lint": "eslint \"./**/*.ts*\"",
     "prettier": "prettier './**/*.{js,ts,md,html,css}' --write",
     "prettier-check": "prettier './**/*.{js,ts,md,html,css}' --check",
-    "test": "jest"
+    "test": "jest",
+    "example": "ts-node usage/index.ts",
+    "example:ai": "ts-node src/examples/ai-sdk/ai-sdk-example.ts"
   },
   "exports": {
     "./ai-sdk": {
@@ -31,6 +33,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.5",
     "@typescript-eslint/eslint-plugin": "^8.19.1",
+    "dotenv": "^16.4.0",
     "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.31.0",
@@ -45,14 +48,14 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^1.3.4",
+    "typescript-epo-ops-client": "github:abdullahatrash/typescript-epo-ops-client",
     "zod": "^3.24.1",
     "zod-to-json-schema": "^3.24.3"
   },
   "peerDependencies": {
-    "openai": "^4.86.1",
-    "@langchain/core": "^0.3.6",
-    "@modelcontextprotocol/sdk": "^1.4.1",
-    "ai": "^3.4.7 || ^4.0.0"
+    "ai": "^3.4.7 || ^4.0.0",
+    "openai": "^4.86.1"
   },
   "workspaces": [
     ".",
