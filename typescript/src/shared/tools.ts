@@ -1,42 +1,9 @@
 import {z} from 'zod';
-
-import {
-  createCustomerPrompt,
-  listCustomersPrompt,
-  createProductPrompt,
-  listProductsPrompt,
-  createPricePrompt,
-  listPricesPrompt,
-  createPaymentLinkPrompt,
-  createInvoicePrompt,
-  listInvoicesPrompt,
-  createInvoiceItemPrompt,
-  finalizeInvoicePrompt,
-  retrieveBalancePrompt,
-  createRefundPrompt,
-  searchDocumentationPrompt,
-  listPaymentIntentsPrompt,
-} from './prompts';
-
-import {
-  createCustomerParameters,
-  listCustomersParameters,
-  createProductParameters,
-  listProductsParameters,
-  createPriceParameters,
-  listPricesParameters,
-  createPaymentLinkParameters,
-  createInvoiceParameters,
-  listInvoicesParameters,
-  createInvoiceItemParameters,
-  finalizeInvoiceParameters,
-  retrieveBalanceParameters,
-  createRefundParameters,
-  searchDocumentationParameters,
-  listPaymentIntentsParameters,
-} from './parameters';
-
 import type {Context} from './configuration';
+
+const referenceTypeEnum = z.enum(['publication', 'application', 'priority']);
+const inputTypeEnum = z.enum(['docdb', 'epodoc']);
+const imageFormatEnum = z.enum(['pdf', 'tiff', 'jpeg', 'png']);
 
 export type Tool = {
   method: string;
@@ -50,172 +17,165 @@ export type Tool = {
   };
 };
 
-const tools = (context: Context): Tool[] => [
-  {
-    method: 'create_customer',
-    name: 'Create Customer',
-    description: createCustomerPrompt(context),
-    parameters: createCustomerParameters(context),
-    actions: {
-      customers: {
-        create: true,
+export default function tools(context: Context = {}): Tool[] {
+  return [
+    {
+      method: 'publishedDataSearch',
+      name: 'Search Published Patent Documents',
+      description:
+        'Search for published patent documents using CQL (Common Query Language) syntax to find patents matching specific criteria',
+      parameters: z.object({
+        cql: z
+          .string()
+          .describe(
+            'CQL query string (e.g., "pa=IBM" for patents by IBM, "ti=computer" for patents with computer in the title)'
+          ),
+        rangeBegin: z
+          .number()
+          .default(1)
+          .optional()
+          .describe('Starting index of results to return (default: 1)'),
+        rangeEnd: z
+          .number()
+          .default(25)
+          .optional()
+          .describe(
+            'Ending index of results to return (default: 25, max: 100)'
+          ),
+        constituents: z
+          .array(z.string())
+          .optional()
+          .describe('Optional data sections to include in the response'),
+      }),
+      actions: {
+        search: {
+          read: true,
+        },
       },
     },
-  },
-  {
-    method: 'list_customers',
-    name: 'List Customers',
-    description: listCustomersPrompt(context),
-    parameters: listCustomersParameters(context),
-    actions: {
-      customers: {
-        read: true,
+    {
+      method: 'publishedData',
+      name: 'Retrieve Patent Document Data',
+      description:
+        'Retrieve bibliographic data, claims, description, or images for a specific patent document',
+      parameters: z.object({
+        referenceType: referenceTypeEnum
+          .default('publication')
+          .describe(
+            'Type of reference (publication, application, or priority)'
+          ),
+        input: z
+          .string()
+          .describe(
+            'Patent reference (e.g., "EP.1000000.A1" for docdb format, "EP1000000" for epodoc format)'
+          ),
+        inputType: inputTypeEnum
+          .default('docdb')
+          .describe('Format of the input reference (docdb or epodoc)'),
+        endpoint: z
+          .string()
+          .default('biblio')
+          .describe('Data to retrieve: biblio, claims, description, or images'),
+        constituents: z
+          .array(z.string())
+          .optional()
+          .describe('Optional data sections to include in the response'),
+      }),
+      actions: {
+        publishedData: {
+          read: true,
+        },
       },
     },
-  },
-  {
-    method: 'create_product',
-    name: 'Create Product',
-    description: createProductPrompt(context),
-    parameters: createProductParameters(context),
-    actions: {
-      products: {
-        create: true,
+    {
+      method: 'family',
+      name: 'Retrieve Patent Family Information',
+      description:
+        'Retrieve patent family information to find related patents for a specific patent document',
+      parameters: z.object({
+        referenceType: referenceTypeEnum
+          .default('publication')
+          .describe(
+            'Type of reference (publication, application, or priority)'
+          ),
+        input: z
+          .string()
+          .describe(
+            'Patent reference (e.g., "EP.1000000.A1" for docdb format, "EP1000000" for epodoc format)'
+          ),
+        inputType: inputTypeEnum
+          .default('docdb')
+          .describe('Format of the input reference (docdb or epodoc)'),
+        endpoint: z
+          .string()
+          .optional()
+          .describe('Optional endpoint specification'),
+        constituents: z
+          .array(z.string())
+          .optional()
+          .describe('Optional data sections to include in the response'),
+      }),
+      actions: {
+        family: {
+          read: true,
+        },
       },
     },
-  },
-  {
-    method: 'list_products',
-    name: 'List Products',
-    description: listProductsPrompt(context),
-    parameters: listProductsParameters(context),
-    actions: {
-      products: {
-        read: true,
+    {
+      method: 'downloadImage',
+      name: 'Download Patent Document Image',
+      description:
+        'Download a patent document image (full image, first page, or thumbnail) in various formats',
+      parameters: z.object({
+        imagePath: z
+          .string()
+          .describe(
+            'Image path (e.g., "EP/1000000/A1/fullimage" - use country code, number, kind code, and image type)'
+          ),
+        format: imageFormatEnum
+          .default('pdf')
+          .describe('Image format to download (pdf, tiff, jpeg, or png)'),
+        outputPath: z
+          .string()
+          .describe(
+            'Path where to save the downloaded image (including filename and extension)'
+          ),
+      }),
+      actions: {
+        image: {
+          download: true,
+        },
       },
     },
-  },
-  {
-    method: 'create_price',
-    name: 'Create Price',
-    description: createPricePrompt(context),
-    parameters: createPriceParameters(context),
-    actions: {
-      prices: {
-        create: true,
+    {
+      method: 'number',
+      name: 'Convert Patent Number Format',
+      description:
+        'Convert between different patent number formats (docdb and epodoc)',
+      parameters: z.object({
+        referenceType: referenceTypeEnum
+          .default('publication')
+          .describe(
+            'Type of reference (publication, application, or priority)'
+          ),
+        input: z
+          .string()
+          .describe(
+            'Patent reference (e.g., "EP.1000000.A1" for docdb format, "EP1000000" for epodoc format)'
+          ),
+        inputType: inputTypeEnum
+          .default('docdb')
+          .describe('Format of the input reference (docdb or epodoc)'),
+        outputFormat: z
+          .enum(['docdb', 'epodoc'])
+          .default('epodoc')
+          .describe('Format to convert to (docdb or epodoc)'),
+      }),
+      actions: {
+        number: {
+          read: true,
+        },
       },
     },
-  },
-  {
-    method: 'list_prices',
-    name: 'List Prices',
-    description: listPricesPrompt(context),
-    parameters: listPricesParameters(context),
-    actions: {
-      prices: {
-        read: true,
-      },
-    },
-  },
-  {
-    method: 'create_payment_link',
-    name: 'Create Payment Link',
-    description: createPaymentLinkPrompt(context),
-    parameters: createPaymentLinkParameters(context),
-    actions: {
-      paymentLinks: {
-        create: true,
-      },
-    },
-  },
-  {
-    method: 'create_invoice',
-    name: 'Create Invoice',
-    description: createInvoicePrompt(context),
-    parameters: createInvoiceParameters(context),
-    actions: {
-      invoices: {
-        create: true,
-      },
-    },
-  },
-  {
-    method: 'list_invoices',
-    name: 'List Invoices',
-    description: listInvoicesPrompt(context),
-    parameters: listInvoicesParameters(context),
-    actions: {
-      invoices: {
-        read: true,
-      },
-    },
-  },
-  {
-    method: 'create_invoice_item',
-    name: 'Create Invoice Item',
-    description: createInvoiceItemPrompt(context),
-    parameters: createInvoiceItemParameters(context),
-    actions: {
-      invoiceItems: {
-        create: true,
-      },
-    },
-  },
-  {
-    method: 'finalize_invoice',
-    name: 'Finalize Invoice',
-    description: finalizeInvoicePrompt(context),
-    parameters: finalizeInvoiceParameters(context),
-    actions: {
-      invoices: {
-        update: true,
-      },
-    },
-  },
-  {
-    method: 'retrieve_balance',
-    name: 'Retrieve Balance',
-    description: retrieveBalancePrompt(context),
-    parameters: retrieveBalanceParameters(context),
-    actions: {
-      balance: {
-        read: true,
-      },
-    },
-  },
-  {
-    method: 'create_refund',
-    name: 'Create Refund',
-    description: createRefundPrompt(context),
-    parameters: createRefundParameters(context),
-    actions: {
-      refunds: {
-        create: true,
-      },
-    },
-  },
-  {
-    method: 'list_payment_intents',
-    name: 'List Payment Intents',
-    description: listPaymentIntentsPrompt(context),
-    parameters: listPaymentIntentsParameters(context),
-    actions: {
-      paymentIntents: {
-        read: true,
-      },
-    },
-  },
-  {
-    method: 'search_documentation',
-    name: 'Search Documentation',
-    description: searchDocumentationPrompt(context),
-    parameters: searchDocumentationParameters(context),
-    actions: {
-      documentation: {
-        read: true,
-      },
-    },
-  },
-];
-
-export default tools;
+  ];
+}
