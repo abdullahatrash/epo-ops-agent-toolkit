@@ -9,8 +9,12 @@
     "prettier": "prettier './**/*.{js,ts,md,html,css}' --write",
     "prettier-check": "prettier './**/*.{js,ts,md,html,css}' --check",
     "test": "jest",
-    "example": "ts-node usage/index.ts",
-    "example:ai": "ts-node src/examples/ai-sdk/ai-sdk-example.ts"
+    "example": "ts-node src/examples/ai-sdk/index.ts",
+    "example:ai": "ts-node src/examples/ai-sdk/ai-sdk-example.ts",
+    "example-2:ai": "ts-node src/examples/ai-sdk/ai-sdk-example-2.ts",
+    "classification-example": "ts-node src/examples/ai-sdk/classification-example.ts",
+    "register-documents-example": "ts-node src/examples/ai-sdk/register-documents-example.ts",
+    "legal-status-example": "ts-node src/examples/ai-sdk/legal-status-example.ts"
   },
   "exports": {
     "./ai-sdk": {
