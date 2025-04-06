@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai'
-import { streamText } from 'ai'
+import { generateText } from 'ai'
 import { EPOAgentToolkit } from '../../ai-sdk'
 
 // Initialize the EPO toolkit with your credentials
@@ -25,14 +25,19 @@ export async function POST(req: Request) {
 	)
 
 	try {
-		const result = streamText({
+		const result = await generateText({
 			model: openai('gpt-4-turbo'),
 			messages,
-			stream: true,
 			tools: epoToolkit.getTools(),
+			maxSteps: 5
 		})
 
-		return result.toDataStreamResponse()
+		return new Response(JSON.stringify({ 
+			text: result.text,
+			steps: result.steps
+		}), {
+			headers: { 'Content-Type': 'application/json' }
+		})
 	} catch (error: any) {
 		console.error('Error processing request:', error)
 		return new Response(

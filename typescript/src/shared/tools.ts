@@ -4,6 +4,7 @@ import type {Context} from './configuration';
 const referenceTypeEnum = z.enum(['publication', 'application', 'priority']);
 const inputTypeEnum = z.enum(['docdb', 'epodoc']);
 const imageFormatEnum = z.enum(['pdf', 'tiff', 'jpeg', 'png']);
+const classificationTypeEnum = z.enum(['ipc', 'cpc', 'fterm', 'us']);
 
 export type Tool = {
   method: string;
@@ -173,6 +174,132 @@ export default function tools(context: Context = {}): Tool[] {
       }),
       actions: {
         number: {
+          read: true,
+        },
+      },
+    },
+    {
+      method: 'legalStatus',
+      name: 'Retrieve Patent Legal Status',
+      description:
+        'Retrieve legal status information for a specific patent document including grant dates, expiration, and administrative events',
+      parameters: z.object({
+        referenceType: referenceTypeEnum
+          .default('publication')
+          .describe(
+            'Type of reference (publication, application, or priority)'
+          ),
+        input: z
+          .string()
+          .describe(
+            'Patent reference (e.g., "EP.1000000.A1" for docdb format, "EP1000000" for epodoc format)'
+          ),
+        inputType: inputTypeEnum
+          .default('docdb')
+          .describe('Format of the input reference (docdb or epodoc)'),
+        constituents: z
+          .array(z.string())
+          .optional()
+          .describe('Optional data sections to include in the response'),
+      }),
+      actions: {
+        legalStatus: {
+          read: true,
+        },
+      },
+    },
+    {
+      method: 'registerDocuments',
+      name: 'Retrieve Patent Register Documents',
+      description:
+        'Access register documents and procedural status information for a patent, including file history and examination documents',
+      parameters: z.object({
+        referenceType: referenceTypeEnum
+          .default('publication')
+          .describe(
+            'Type of reference (publication, application, or priority)'
+          ),
+        input: z
+          .string()
+          .describe(
+            'Patent reference (e.g., "EP.1000000.A1" for docdb format, "EP1000000" for epodoc format)'
+          ),
+        inputType: inputTypeEnum
+          .default('docdb')
+          .describe('Format of the input reference (docdb or epodoc)'),
+        endpoint: z
+          .string()
+          .default('biblio')
+          .describe(
+            'Type of register data to retrieve: biblio, procedural-status, or documents'
+          ),
+        constituents: z
+          .array(z.string())
+          .optional()
+          .describe('Optional data sections to include in the response'),
+      }),
+      actions: {
+        registerDocuments: {
+          read: true,
+        },
+      },
+    },
+    {
+      method: 'citations',
+      name: 'Retrieve Patent Citations',
+      description:
+        'Retrieve citation information for a specific patent document, showing both citations made by this patent and citations of this patent by others',
+      parameters: z.object({
+        referenceType: referenceTypeEnum
+          .default('publication')
+          .describe(
+            'Type of reference (publication, application, or priority)'
+          ),
+        input: z
+          .string()
+          .describe(
+            'Patent reference (e.g., "EP.1000000.A1" for docdb format, "EP1000000" for epodoc format)'
+          ),
+        inputType: inputTypeEnum
+          .default('docdb')
+          .describe('Format of the input reference (docdb or epodoc)'),
+        citationType: z
+          .enum(['cited', 'citing', 'both'])
+          .default('both')
+          .describe(
+            'Type of citations to retrieve: cited (by this patent), citing (this patent), or both'
+          ),
+      }),
+      actions: {
+        citations: {
+          read: true,
+        },
+      },
+    },
+    {
+      method: 'classification',
+      name: 'Convert Patent Classification',
+      description:
+        'Convert between different patent classification systems (IPC, CPC, etc.) or retrieve classification details',
+      parameters: z.object({
+        classificationType: classificationTypeEnum
+          .default('ipc')
+          .describe('Classification system type (IPC, CPC, F-term, US)'),
+        classificationSymbol: z
+          .string()
+          .describe(
+            'Classification symbol to convert or retrieve (e.g., "G06F 3/00")'
+          ),
+        targetType: classificationTypeEnum
+          .default('cpc')
+          .describe('Target classification system for conversion'),
+        includeHierarchy: z
+          .boolean()
+          .default(false)
+          .describe('Whether to include the complete classification hierarchy'),
+      }),
+      actions: {
+        classification: {
           read: true,
         },
       },
